@@ -1,0 +1,101 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+library(nbastatR)
+
+game_logs(seasons = 2019, result_types = c("team"), nest_data = FALSE) %>% filter(nameTeam == "Los Angeles Lakers") %>% .$idGame -> lakers_game_ids
+game_logs(seasons = 2019, result_types = c("team"), nest_data = FALSE) %>% filter(nameTeam == "Los Angeles Lakers") %>% .$slugOpponent -> lakers_game_opponents
+
+get_pace_for_game <- function(game_id) {
+  advanced_boxscore <- box_scores(game_ids = game_id, box_score_types = c("Advanced"), result_types = "team")
+  advanced_boxscore$dataBoxScore[[1]]$pace[1]
+}
+
+get_team_game_ids <- function(team_shorthand_str) {
+  game_logs(seasons = 2019, result_types = c("team"), nest_data = FALSE) %>% filter(slugTeam == team_shorthand_str) %>% .$idGame
+}
+
+get_team_pace <- function(team_shorthand_str) {
+  game_ids <- get_team_game_ids(team_shorthand_str)
+  tibble(team = team_shorthand_str,
+         game_id = game_ids) %>%
+    mutate(pace = map_dbl(game_id, get_pace_for_game))
+}
+
+get_team_avg_pace <- function(team_shorthand_str) {
+  game_ids <- get_team_game_ids(team_shorthand_str)
+  game_ids %>% map_dbl(get_pace_for_game) %>% mean
+}
+
+lakers_game_ids %>% map_dbl(get_pace)
+
+all_teams_shorthand <- game_logs(seasons = 2019, result_types = c("team"), nest_data = FALSE) %>% .$slugTeam %>% unique()
+all_teams_pace <-
+  tibble(team = all_teams_shorthand) %>%
+  mutate(avg_pace = map_dbl(team, get_team_avg_pace))
+
+lakers_games <-
+  game_logs(seasons = 2019, result_types = c("team"), nest_data = FALSE) %>%
+  filter(nameTeam == "Los Angeles Lakers") %>%
+  select(idGame, dateGame, locationGame, slugOpponent, isWin,
+         fgmTeam, fgaTeam,
+         minutesTeam, astTeam, orebTeam, drebTeam, tovTeam) %>%
+  mutate(pace = map_dbl(idGame, get_pace_for_game)) %>%
+  inner_join(all_teams_pace, by = c("slugOpponent" = "team")) %>%
+  rename(avg_opp_pace = avg_pace)
+```
+
+```{r}
+all_games_pace <-
+  all_teams_shorthand %>%
+  map(get_team_pace) %>%
+  bind_rows()
+
+teams_median_pace <-
+  all_games_pace %>%
+  group_by(team) %>%
+  summarize(med_pace = median(pace))
+
+teams_by_med_pace <- teams_median_pace %>% arrange(med_pace) %>% pull(team)
+
+all_games_pace %>%
+  inner_join(teams_median_pace) %>%
+  mutate(team = factor(team, levels = teams_by_med_pace)) %>%
+  rename(team_med_pace = med_pace) %>%
+  ggplot(aes(team, pace)) +
+  geom_boxplot()
+```
+
+```{r}
+games <-
+  game_logs(seasons = 2018, result_types = c("team"), nest_data = FALSE) %>%
+  select(idGame, dateGame, locationGame, slugTeam, slugOpponent, isWin,
+         fgmTeam, fgaTeam,
+         minutesTeam, astTeam, orebTeam, drebTeam, tovTeam) %>%
+  mutate(pace = map_dbl(idGame, get_pace_for_game)) %>%
+  inner_join(all_teams_pace, by = c("slugOpponent" = "team")) %>%
+  rename(avg_opp_pace = avg_pace)
+
+games_diff_in_pace <- 
+  games %>%
+  inner_join(all_teams_pace, by = c("slugTeam" = "team")) %>%
+  rename(avg_team_pace = avg_pace) %>%
+  mutate(predicted_pace = (avg_opp_pace+avg_team_pace)/2.0) %>%
+  mutate(pred_diff = ifelse(avg_team_pace > predicted_pace, pace-predicted_pace, predicted_pace-pace))
+
+ordered_names_med_pred_diff <- games_diff_in_pace %>% group_by(slugTeam) %>% summarize(med_pred_diff = median(pred_diff)) %>% arrange(med_pred_diff) %>% pull(slugTeam)
+ordered_names_winrate <- games_diff_in_pace %>% group_by(slugTeam) %>% summarize(win_rate = mean(isWin)) %>% arrange(win_rate) %>% pull(slugTeam)
+
+games_diff_in_pace %>%
+  mutate(slugTeam = factor(slugTeam, levels = ordered_names_med_pred_diff)) %>%
+  ggplot(aes(slugTeam, pred_diff)) +
+  geom_boxplot() +
+  geom_hline(yintercept = 0, color ="red")
+```
+
+
+

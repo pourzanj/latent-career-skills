@@ -1,0 +1,25 @@
+---
+title: "Exploratory Analysis of Catch and Shoot Behavior Over Multiple Seasons"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+source("../R/wrangle_player_tracking.R") # takes about 6 minutes on Arya's Macbook Pro
+
+catch_shoot_player_profile <-
+  catch_shoot %>%
+  left_join(player_profiles, by = c("PLAYER_ID" = "idPlayer")) %>%
+  mutate(age = (season_start_date - dateBirth)/365)
+```
+
+# Basic Plots Versus Age
+
+```{r}
+catch_shoot_player_profile %>%
+  filter(PLAYER_NAME %in% c("Klay Thompson", "Stephen Curry", "Damian Lillard", "Andrew Wiggins", "Kyrie Irving", "Kemba Walker")) %>%
+  ggplot(aes(age, CATCH_SHOOT_FG3_PCT, color = PLAYER_NAME)) +
+  geom_point() +
+  geom_smooth(se = FALSE, method = "lm")
+```
+
