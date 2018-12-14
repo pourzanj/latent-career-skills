@@ -1,5 +1,3 @@
-library(mvtnorm)
-
 forward_simulate_quadratic <- function(N, M, L) {
   
   # draw fake players with fake number of seasons and starting age
@@ -99,3 +97,5 @@ dat <- list(
   player_id = synthetic_data$latent_skill_per_season$player_id,
   season_id = synthetic_data$latent_skill_per_season$player_season
 )
+
+fit <- stan(file = "Stan/latent_player_trajectories_quadratic.stan", data = dat, chains = 1, iter = 1)

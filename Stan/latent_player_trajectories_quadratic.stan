@@ -27,7 +27,7 @@ parameters {
 transformed parameters {
   matrix[L,S] Z;
   matrix[M,S] X_tilde;
-  matrix[M,L] W = qr_Q(W_raw);
+  matrix[M,L] W = qr_Q(W_raw)[,1:L];
   
   // evaluate latent trajectories at the times we observed data
   for(s in 1:S) {
@@ -42,9 +42,14 @@ transformed parameters {
 model {
   
   // level 1 parameters
-  ab[1] ~ normal(-8.0, 2.0);
-  ab[2] ~ normal(4.0, 2.0);
-  c ~ normal(0.0, -1.0);
+  for(n in 1:N) {
+    for(l in 1:L) {
+      ab[n,l][1] ~ normal(-8.0, 2.0);
+      ab[n,l][2] ~ normal(4.0, 2.0);
+    }
+  }
+
+  to_array_1d(c) ~ normal(-1.0, 1.0);
   
   // level 2 parameters
   to_array_1d(W_raw) ~ normal(0,1);
