@@ -1,5 +1,5 @@
 require(tidyverse)
-
+require(nbastatR)
 #################
 # Drives
 #################
@@ -14,11 +14,11 @@ require(tidyverse)
 # 2p%
 # 3p%
 
-drives_2013_14 <- read_csv("data/csvs 2/drives_2013-14.csv") %>% mutate(season = "2013-14", season_start_date = as.Date("2013-11-01")) %>% select(-X1) %>% select(season, season_start_date, everything())
-drives_2014_15 <- read_csv("data/csvs 2/drives_2014-15.csv") %>% mutate(season = "2014-15", season_start_date = as.Date("2014-11-01")) %>% select(-X1) %>% select(season, season_start_date, everything())
-drives_2015_16 <- read_csv("data/csvs 2/drives_2015-16.csv") %>% mutate(season = "2015-16", season_start_date = as.Date("2015-11-01")) %>% select(-X1) %>% select(season, season_start_date, everything())
-drives_2016_17 <- read_csv("data/csvs 2/drives_2016-17.csv") %>% mutate(season = "2016-17", season_start_date = as.Date("2016-11-01")) %>% select(-X1) %>% select(season, season_start_date, everything())
-drives_2017_18 <- read_csv("data/csvs 2/drives_2017-18.csv") %>% mutate(season = "2017-18", season_start_date = as.Date("2017-11-01")) %>% select(-X1) %>% select(season, season_start_date, everything())
+drives_2013_14 <- read_csv("data/csvs/drives_2013-14.csv") %>% mutate(season = "2013-14", season_start_date = as.Date("2013-11-01")) %>% select(-X1) %>% select(season, season_start_date, everything())
+drives_2014_15 <- read_csv("data/csvs/drives_2014-15.csv") %>% mutate(season = "2014-15", season_start_date = as.Date("2014-11-01")) %>% select(-X1) %>% select(season, season_start_date, everything())
+drives_2015_16 <- read_csv("data/csvs/drives_2015-16.csv") %>% mutate(season = "2015-16", season_start_date = as.Date("2015-11-01")) %>% select(-X1) %>% select(season, season_start_date, everything())
+drives_2016_17 <- read_csv("data/csvs/drives_2016-17.csv") %>% mutate(season = "2016-17", season_start_date = as.Date("2016-11-01")) %>% select(-X1) %>% select(season, season_start_date, everything())
+drives_2017_18 <- read_csv("data/csvs/drives_2017-18.csv") %>% mutate(season = "2017-18", season_start_date = as.Date("2017-11-01")) %>% select(-X1) %>% select(season, season_start_date, everything())
 
 drives <- bind_rows(drives_2013_14, drives_2014_15, drives_2015_16, drives_2016_17, drives_2017_18)
 
@@ -34,11 +34,11 @@ drives_player_profile <-
 #################
 # Catch and Shoot
 #################
-catch_shoot_2013_14 <- read_csv("data/csvs 2/catch_shoot_2013-14.csv") %>% mutate(season = "2013-14", season_start_date = as.Date("2013-11-01")) %>% select(-X1) %>% select(season, season_start_date, everything())
-catch_shoot_2014_15 <- read_csv("data/csvs 2/catch_shoot_2014-15.csv") %>% mutate(season = "2014-15", season_start_date = as.Date("2014-11-01")) %>% select(-X1) %>% select(season, season_start_date, everything())
-catch_shoot_2015_16 <- read_csv("data/csvs 2/catch_shoot_2015-16.csv") %>% mutate(season = "2015-16", season_start_date = as.Date("2015-11-01")) %>% select(-X1) %>% select(season, season_start_date, everything())
-catch_shoot_2016_17 <- read_csv("data/csvs 2/catch_shoot_2016-17.csv") %>% mutate(season = "2016-17", season_start_date = as.Date("2016-11-01")) %>% select(-X1) %>% select(season, season_start_date, everything())
-catch_shoot_2017_18 <- read_csv("data/csvs 2/catch_shoot_2017-18.csv") %>% mutate(season = "2017-18", season_start_date = as.Date("2017-11-01")) %>% select(-X1) %>% select(season, season_start_date, everything())
+catch_shoot_2013_14 <- read_csv("data/csvs/catch_shoot_2013-14.csv") %>% mutate(season = "2013-14", season_start_date = as.Date("2013-11-01")) %>% select(-X1) %>% select(season, season_start_date, everything())
+catch_shoot_2014_15 <- read_csv("data/csvs/catch_shoot_2014-15.csv") %>% mutate(season = "2014-15", season_start_date = as.Date("2014-11-01")) %>% select(-X1) %>% select(season, season_start_date, everything())
+catch_shoot_2015_16 <- read_csv("data/csvs/catch_shoot_2015-16.csv") %>% mutate(season = "2015-16", season_start_date = as.Date("2015-11-01")) %>% select(-X1) %>% select(season, season_start_date, everything())
+catch_shoot_2016_17 <- read_csv("data/csvs/catch_shoot_2016-17.csv") %>% mutate(season = "2016-17", season_start_date = as.Date("2016-11-01")) %>% select(-X1) %>% select(season, season_start_date, everything())
+catch_shoot_2017_18 <- read_csv("data/csvs/catch_shoot_2017-18.csv") %>% mutate(season = "2017-18", season_start_date = as.Date("2017-11-01")) %>% select(-X1) %>% select(season, season_start_date, everything())
 
 catch_shoot <- bind_rows(catch_shoot_2013_14, catch_shoot_2014_15, catch_shoot_2015_16, catch_shoot_2016_17, catch_shoot_2017_18)
 
