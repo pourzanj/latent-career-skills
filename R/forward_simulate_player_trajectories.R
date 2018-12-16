@@ -40,7 +40,7 @@ forward_simulate_quadratic <- function(N, M, L) {
     qr %>%
     qr.Q
   
-  Lambda <- runif(L, 0, 100) %>% abs %>% sort(decreasing = TRUE)
+  Lambda <- runif(L, 0, 1) %>% abs %>% sort(decreasing = TRUE)
   
   # use latent skills per season to create expected stats levels X_tilde
   # X_tilde = W Lambda Z. x_it = mu + W*Lambda*z_it + eps_it
@@ -50,7 +50,7 @@ forward_simulate_quadratic <- function(N, M, L) {
     as.matrix %>%
     t()
   
-  mu <- runif(M, 0, 100)
+  mu <- runif(M, 0, 1)
   
   X_tilde <- mu + W %*% (Lambda * Z)
   
@@ -59,7 +59,7 @@ forward_simulate_quadratic <- function(N, M, L) {
   # and is essentially a normalizer depending much data we have for that stat e.g. if the stat
   # is the player's FG% on drives then then sigma_ijt would be the number of field goals they attempted on drives that seasons
   S <- dim(X_tilde)[2]
-  sigma <- matrix(1/rgamma(M*S, shape = 2.0, rate = 2.0), nrow = M)
+  sigma <- matrix(1/rgamma(M*S, shape = 2.0, rate = 2.0), nrow = M) %>% sqrt()
   eps <- sigma * matrix(rnorm(M*S), nrow = M)
   
   # add noise to X_tilde to get X.
@@ -74,6 +74,7 @@ forward_simulate_quadratic <- function(N, M, L) {
        latent_skill_parameters = latent_skill_parameters,
        latent_skill_per_season = latent_skill_per_season,
        W = W,
+       Lambda = Lambda,
        Z = Z,
        mu = mu,
        sigma = sigma,
@@ -82,7 +83,7 @@ forward_simulate_quadratic <- function(N, M, L) {
 }
 
 # simulate and infer in Stan
-synthetic_data <- forward_simulate_quadratic(100, 10, 3)
+synthetic_data <- forward_simulate_quadratic(N = 10, M = 2, L = 1)
 
 dat <- list(
   N = synthetic_data$N,
@@ -98,4 +99,20 @@ dat <- list(
   season_id = synthetic_data$latent_skill_per_season$player_season
 )
 
-fit <- stan(file = "Stan/latent_player_trajectories_quadratic.stan", data = dat, chains = 1, iter = 1)
+synthetic_data$W; synthetic_data$Lambda; synthetic_data$mu
+
+fit <- stan(file = "Stan/latent_player_trajectories_quadratic.stan", data = dat, chains = 1, iter = 2000, refresh = 20)
+
+tibble(time_id = 1:4, t = synthetic_data$latent_skill_per_season$t) %>% bind_cols(as_tibble(t(synthetic_data$X)))
+
+# plot posterior predictives of data
+extract(fit, pars = c("ab","c", "X_rep"))$X_rep[,1,1:5] %>%
+  melt() %>%
+  as_tibble() %>%
+  set_names(c("sample_id", "time_id", "value")) %>%
+  inner_join(tibble(time_id = 1:5, t = synthetic_data$latent_skill_per_season$t[1:5])) %>%
+  ggplot(aes(t, value, group = sample_id)) +
+  geom_point(alpha = 0.1) +
+  geom_point(aes(t, V1, group = NULL), color = "red", data =
+               tibble(time_id = 1:5, t = synthetic_data$latent_skill_per_season$t[1:5]) %>% bind_cols(as_tibble(t(synthetic_data$X[,1:5]))) %>% select(-V2)
+             )

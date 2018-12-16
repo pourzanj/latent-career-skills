@@ -17,22 +17,30 @@ parameters {
   // a switching identifiability as Richard pointed out.
   // c is constrained to be negative because a player trajectory must go up then down
   ordered[2] ab[N,L];
+  // vector[2] ab[N,L];
   real<upper=0.0> c[N, L];
+  // vector[3] beta[N,L];
   
   // level 2: factor model to generate stats from latent trajectories
-  vector[M] mu;
-  matrix[M,L] W_raw;
+  //vector[M] mu;
+  //matrix[M,L] W_raw;
   vector<lower=0>[L] Lambda;
 }
 transformed parameters {
   matrix[L,S] Z;
   matrix[M,S] X_tilde;
-  matrix[M,L] W = qr_Q(W_raw)[,1:L];
+  //matrix[M,L] W = qr_Q(W_raw)[,1:L];
+  matrix[M,L] W;
+  vector[M] mu = [0.3105915, 0.4899208]';
+  // vector<lower=0>[L] Lambda = [0.468873]';
+  W[1,1] =  -0.9272790;
+  W[2,1] = 0.3743711;
   
   // evaluate latent trajectories at the times we observed data
   for(s in 1:S) {
     for(l in 1:L) {
       Z[l,s] = c[player_id[s],l] * (t[s] - ab[player_id[s],l][1]) * (t[s] - ab[player_id[s],l][2]);
+      // Z[l,s] = beta[player_id[s],l][1] + beta[player_id[s],l][2]*t[s] + beta[player_id[s],l][3]*t[s]^2;
     }
   }
   
@@ -52,13 +60,22 @@ model {
   to_array_1d(c) ~ normal(-1.0, 1.0);
   
   // level 2 parameters
-  to_array_1d(W_raw) ~ normal(0,1);
+  //to_array_1d(W_raw) ~ normal(0,1);
   
   // likelihood
   // iterate over players then the covariates in the data vector
   for(s in 1:S) {
     for(m in 1:M) {
       X[m,s] ~ normal(X_tilde[m,s], sigma[m,s]);
+    }
+  }
+}
+generated quantities {
+  matrix[M,S] X_rep;
+
+  for(s in 1:S) {
+    for(m in 1:M) {
+      X_rep[m,s] = normal_rng(X_tilde[m,s], sigma[m,s]);
     }
   }
 }
